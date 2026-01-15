@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AYUNAN ONDO TORANG JAYA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        [x-cloak] { display: none !important; }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans" x-data="shopSystem()" x-cloak>
+
+    <div x-show="showToast" 
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0 transform -translate-y-4"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-end="opacity-0 transform -translate-y-4"
+         class="fixed top-24 left-1/2 -translate-x-1/2 z-[110] bg-gray-800 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-4">
+        <span class="text-sm">✅ <span x-text="lastAddedItem"></span> berhasil ditambah!</span>
+        <button @click="openCart = true; showToast = false" class="text-yellow-400 font-bold text-sm hover:underline border-l border-gray-600 pl-4">Lihat Keranjang</button>
+    </div>
+
+    <header class="bg-blue-700 text-white shadow-lg sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold italic">Ayunan Ondo Torang Jaya</h1>
+                <p class="text-xs opacity-80">Admin: Ndo | Usaha: Las, Tralis, Pagar, dan Ayunan (Mainan)</p>
+            </div>
+            <div class="flex items-center gap-2 md:gap-4">
+                <a href="https://share.google/6G2dYV4I1clZbn6oJ" target="_blank" title="Lihat Lokasi Toko Kami" 
+                   class="p-2.5 bg-blue-600 rounded-full hover:bg-blue-500 transition shadow-md flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 fill-white" viewBox="0 0 24 24">
+                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                    </svg>
+                </a>
+                <button @click="openCart = true" class="relative p-3 bg-blue-800 rounded-full hover:bg-blue-900 transition">
+                    🛒 <span class="absolute -top-1 -right-1 bg-yellow-400 text-blue-900 text-[10px] font-bold rounded-full px-2 py-0.5" x-text="cart.length"></span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-10">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <template x-for="product in products" :key="product.id">
+                <div class="bg-white rounded-2xl shadow-md overflow-hidden flex flex-col h-full border border-gray-100">
+                    <div x-data="{ activeSlide: 0 }" class="relative">
+                        <div class="h-64 bg-gray-200 overflow-hidden cursor-zoom-in">
+                            <template x-if="activeSlide < 3">
+                                <img :src="product.images[activeSlide]" 
+                                     @click="openLightbox(product, activeSlide)" 
+                                     class="w-full h-full object-cover" 
+                                     title="Klik untuk memperbesar">
+                            </template>
+                            <template x-if="activeSlide === 3">
+                                <div class="w-full h-full bg-black relative" @click="openLightbox(product, 3)">
+                                    <video class="w-full h-full object-cover opacity-60">
+                                        <source :src="product.video" type="video/mp4">
+                                    </video>
+                                    <div class="absolute inset-0 flex items-center justify-center text-white text-sm font-bold bg-black/20">
+                                        ▶ KLIK PERBESAR VIDEO
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                        <div class="absolute bottom-2 left-0 right-0 flex justify-center gap-2">
+                            <template x-for="(img, index) in 4">
+                                <button @click="activeSlide = index" 
+                                        :class="activeSlide === index ? 'bg-blue-600 w-4' : 'bg-white/50 w-2'" 
+                                        class="h-2 rounded-full transition-all shadow-sm"></button>
+                            </template>
+                        </div>
+                    </div>
+
+                    <div class="p-5 flex-grow">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h3 class="text-lg font-bold text-gray-800" x-text="product.name"></h3>
+                                <span class="text-xs text-blue-600 font-semibold uppercase" x-text="product.type"></span>
+                            </div>
+                            <p class="text-lg font-black text-red-600" x-text="formatRupiah(product.price)"></p>
+                        </div>
+                        <div class="mt-4 p-3 bg-gray-50 rounded-lg text-xs text-gray-600">
+                            <p class="font-bold border-b mb-1 pb-1">Spesifikasi:</p>
+                            <p>📏 Dimensi: <span x-text="product.spec"></span></p>
+                            <p>⚖️ Berat: <span x-text="product.weight"></span></p>
+                        </div>
+                    </div>
+
+                    <div class="p-5 pt-0 mt-auto flex flex-col gap-2">
+                        <button @click="addToCart(product)" class="w-full bg-blue-600 text-white py-2.5 rounded-lg font-bold hover:bg-blue-700 transition">
+                            + Keranjang
+                        </button>
+                        <button @click="askReady(product.name)" class="w-full border border-green-500 text-green-600 py-2 rounded-lg text-sm font-semibold hover:bg-green-50 transition">
+                            💬 Tanya Stok
+                        </button>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </main>
+
+    <section class="container mx-auto px-4 py-16 border-t border-gray-200">
+        <div class="max-w-3xl mx-auto text-center">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6 uppercase tracking-wider">Tentang Kami</h2>
+            <p class="text-gray-600 leading-relaxed">
+                <span class="font-bold text-blue-700 italic">Ayunan Ondo Torang Jaya</span> adalah bengkel las spesialis pembuatan ayunan mainan anak, tralis, pagar, dan konstruksi besi lainnya yang berlokasi di Cibitung, Bekasi. Semua produk kami dikerjakan secara <span class="italic font-semibold">handmade</span> oleh tenaga ahli dengan material pilihan untuk menjamin keamanan dan ketahanan produk jangka panjang.
+            </p>
+        </div>
+    </section>
+
+    <section class="bg-blue-50 py-16">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-10">
+                <h2 class="text-2xl font-bold text-gray-800">Ulasan Pelanggan</h2>
+                <p class="text-sm text-gray-500">Apa kata mereka tentang produk kami di Google Maps</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-blue-100">
+                    <div class="flex text-yellow-400 mb-3">★★★★★</div>
+                    <p class="text-gray-600 text-sm mb-4 italic">"Selalu beli ayunan kesini kualitas jangn di tanya, sangat kuat. Sudah belanja kesini 6x Harga pas di dompet, pelayanan toko sangat ramah, murah senyum"</p>
+                    <p class="text-xs font-bold text-gray-800">- Ego</p>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-blue-100">
+                    <div class="flex text-yellow-400 mb-3">★★★★★</div>
+                    <p class="text-gray-600 text-sm mb-4 italic">"Beli mainan disini harganya bersahabat bgt, proses pengiriman cepat, pelayanan penjualnya juga ramah. Buat yang mau beli mainan disini saja ya🫰🏻🫰🏻🫰🏻"</p>
+                    <p class="text-xs font-bold text-gray-800">- Shinta Trytha</p>
+                </div>
+				<div class="bg-white p-6 rounded-2xl shadow-sm border border-blue-100">
+                    <div class="flex text-yellow-400 mb-3">★★★★★</div>
+                    <p class="text-gray-600 text-sm mb-4 italic">"Kualitas bagus, harga terjangkau, bisa pesen sesuai permintaan"</p>
+                    <p class="text-xs font-bold text-gray-800">- Verawati</p>
+                </div>
+            </div>
+            <div class="text-center mt-8">
+                <a href="https://share.google/6G2dYV4I1clZbn6oJ" target="_blank" class="text-blue-600 font-bold text-sm hover:underline">
+                    Lihat Semua Ulasan di Google Maps &rarr;
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <footer class="bg-gray-900 text-white py-12">
+        <div class="container mx-auto px-4 text-center">
+            <h2 class="text-xl font-bold italic uppercase">Ayunan Ondo Torang Jaya</h2>
+            <p class="text-gray-400 text-sm mt-2">Admin: Ndo | Workshop: Jl. Inspeksi Kalimalang, Cibitung, Bekasi</p>
+            <a href="https://share.google/6G2dYV4I1clZbn6oJ" target="_blank" 
+               class="inline-flex items-center gap-2 mt-6 px-5 py-2.5 bg-gray-800 border border-gray-700 rounded-full text-xs text-blue-400 hover:text-blue-300 transition shadow-lg">
+                📍 Kunjungi Kami di Google Maps
+            </a>
+            <p class="text-[10px] text-gray-600 mt-12">© 2025 Toko Online Ayunan Ondo Torang Jaya. Dibuat dengan dedikasi.</p>
+        </div>
+    </footer>
+
+    <div x-show="openCart" class="fixed inset-0 z-[100] overflow-hidden" style="display: none;">
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="openCart = false"></div>
+        <div class="absolute inset-y-0 right-0 max-w-md w-full bg-white shadow-2xl flex flex-col">
+            <div class="p-6 border-b flex justify-between items-center bg-gray-50">
+                <h2 class="text-xl font-bold text-blue-800">Keranjang Belanja</h2>
+                <button @click="openCart = false" class="text-3xl font-light hover:text-red-500">&times;</button>
+            </div>
+            <div class="flex-grow p-6 overflow-y-auto">
+                <template x-if="cart.length === 0">
+                    <div class="text-center py-20 text-gray-400">Keranjang masih kosong</div>
+                </template>
+                <template x-for="(item, index) in cart" :key="index">
+                    <div class="flex justify-between items-center mb-4 p-4 border rounded-xl bg-white shadow-sm">
+                        <div>
+                            <p class="font-bold text-gray-800" x-text="item.name"></p>
+                            <p class="text-sm text-red-500 font-semibold" x-text="formatRupiah(item.price)"></p>
+                        </div>
+                        <button @click="removeFromCart(index)" class="text-red-400 hover:text-red-600 font-bold text-xs uppercase">Hapus</button>
+                    </div>
+                </template>
+            </div>
+            <div class="p-6 border-t bg-gray-50" x-show="cart.length > 0">
+                <div class="space-y-3 mb-6">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Nama Lengkap:</label>
+                        <input type="text" x-model="buyerName" class="w-full border p-2 rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Lokasi/Alamat:</label>
+                        <input type="text" x-model="buyerLocation" class="w-full border p-2 rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+                <div class="flex justify-between items-center mb-4 text-lg">
+                    <span class="font-bold">Total:</span>
+                    <span class="font-black text-blue-700" x-text="formatRupiah(totalPrice())"></span>
+                </div>
+                <button @click="checkoutWhatsApp" class="w-full bg-green-500 text-white py-4 rounded-xl font-bold text-lg hover:bg-green-600 transition">Pesan via WhatsApp</button>
+            </div>
+        </div>
+    </div>
+
+    <div x-show="showLightbox" 
+         x-transition.opacity
+         class="fixed inset-0 z-[200] bg-black/95 flex flex-col items-center justify-center"
+         @keydown.window.escape="showLightbox = false"
+         style="display: none;">
+        
+        <button @click="showLightbox = false" class="absolute top-5 right-5 text-white text-4xl z-[210]">&times;</button>
+
+        <div class="w-full h-[75%] flex items-center justify-center p-4">
+            <template x-if="lightboxMedia[lightboxIndex] && !lightboxMedia[lightboxIndex].endsWith('.mp4')">
+                <img :src="lightboxMedia[lightboxIndex]" class="max-w-full max-h-full object-contain shadow-2xl rounded-lg">
+            </template>
+            <template x-if="lightboxMedia[lightboxIndex] && lightboxMedia[lightboxIndex].endsWith('.mp4')">
+                <video :src="lightboxMedia[lightboxIndex]" controls autoplay class="max-w-full max-h-full rounded-lg shadow-2xl bg-black"></video>
+            </template>
+        </div>
+
+        <button @click="prevLightbox()" class="absolute left-4 text-white p-3 bg-white/10 rounded-full hover:bg-white/20 transition">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+        </button>
+        <button @click="nextLightbox()" class="absolute right-4 text-white p-3 bg-white/10 rounded-full hover:bg-white/20 transition">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+        </button>
+
+        <div class="absolute bottom-10 text-white/70 text-sm font-semibold">
+            Media <span x-text="lightboxIndex + 1"></span> dari <span x-text="lightboxMedia.length"></span>
+        </div>
+    </div>
+
+    <a href="https://wa.me/6281387010378?text=Halo%20Admin%2C%20saya%20ingin%20tanya%20mengenai%20pemesanan%20kustom%20di%20Ayunan%20Ondo." 
+       target="_blank"
+       class="fixed bottom-6 right-6 bg-green-500 text-white p-4 rounded-full shadow-2xl hover:bg-green-600 transition-all z-[90] flex items-center group">
+        <span class="max-w-0 overflow-hidden group-hover:max-w-xs group-hover:mr-2 transition-all duration-500 whitespace-nowrap font-semibold">Tanya Custom / Admin</span>
+        <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.414 0 .004 5.408.002 12.04c0 2.12.554 4.189 1.605 6.046L0 24l6.105-1.602a11.83 11.83 0 005.937 1.57h.005c6.637 0 12.046-5.41 12.049-12.042.001-3.218-1.248-6.242-3.514-8.51z"/></svg>
+    </a>
+
+    <script>
+        function shopSystem() {
+            return {
+                showLightbox: false,
+                lightboxMedia: [],
+                lightboxIndex: 0,
+                openCart: false,
+                showToast: false,
+                lastAddedItem: '',
+                cart: [],
+                buyerName: '',
+                buyerLocation: '',
+                waNumber: '6281387010378',
+
+                products: [
+					{ id: 1, name: 'Custom sesuai keinginan anda :)', type: 'Mainan Outdoor', price: 9999999, spec: 'harga berbeda-beda', weight: '000', images: ['img/custom1.jpeg', 'img/custom2.jpeg', 'img/custom3.jpeg', 'img/custom4.jpeg'], video: 'img/video1.mp4' },
+                    { id: 2, name: 'Ayunan Bangku 80 cm', type: 'Mainan Out/In door', price: 2700000, spec: '148 cm x 128 cm x 169 cm (untuk 6 Anak)', weight: '30 kg', images: ['img/aybesar1.jpeg', 'img/a2.jpg', 'img/a3.jpg'], video: 'img/video1.mp4' },
+                    { id: 3, name: 'Ayunan Bangku 60 cm', type: 'Mainan Out/In door', price: 2000000, spec: '148 cm x 110 cm x 160 cm (untuk 4 Anak)', weight: '20 kg', images: ['img/aykecil1.jpeg', 'img/b2.jpg', 'img/b3.jpg'], video: 'img/video2.mp4' },
+                    { id: 4, name: 'Jungkitan', type: 'Mainan Outdoor', price: 1700000, spec: '300 cm x 70 cm x 60 cm', weight: '20 kg', images: ['img/jungkitan1.jpeg', 'img/a2.jpg', 'img/a3.jpg'], video: 'img/apage1.mp4' },
+                    { id: 5, name: 'Gelas Putar', type: 'Mainan Outdoor', price: 2700000, spec: 'Diameter 140 cm dan Tinggi 95 cm', weight: '30 kg', images: ['img/gelasputar1.jpeg', 'img/b2.jpg', 'img/b3.jpg'], video: 'img/video2.mp4' },
+                    { id: 6, name: 'Perosotan Besar', type: 'Mainan Indoor', price: 2500000, spec: '250 cm x 15 cm x 100 cm', weight: '20 kg', images: ['img/perosotanbesar1.jpeg', 'img/perosotanbesar2.jpeg', 'img/a3.jpg'], video: 'img/video1.mp4' },
+                    { id: 7, name: 'Perosotan Kecil', type: 'Mainan Indoor', price: 2200000, spec: '200 cm x 30 cm x 100 cm', weight: '15 kg', images: ['img/perosotankecil1.jpeg', 'img/a2.jpg', 'img/a3.jpg'], video: 'img/video1.mp4' },
+                    { id: 8, name: 'Ayunan Bulat Bangku 80 cm', type: 'Mainan Out/In door', price: 2800000, spec: '148 cm x 128 cm x 169 cm (untuk 6 Anak)', weight: '30 kg', images: ['img/bulatbesar1.jpeg', 'img/bulatbesar2.jpeg', 'img/a3.jpg'], video: 'img/video1.mp4' },
+                    { id: 9, name: 'Ayunan Bulat Bangku 60 cm', type: 'Mainan Out/In door', price: 2200000, spec: '148 cm x 110 cm x 160 cm (untuk 4 Anak)', weight: '20 kg', images: ['img/bulatkecil1.jpeg', 'img/bulatkecil2.jpeg', 'img/a3.jpg'], video: 'img/video1.mp4' },
+                    { id: 10, name: 'Ayunan Rantai', type: 'Mainan Outdoor', price: 2000000, spec: '200 cm x 220 cm ', weight: '15 kg', images: ['img/ayunanrantai1.jpeg', 'img/a2.jpg', 'img/a3.jpg'], video: 'img/video1.mp4' },
+                    { id: 11, name: 'Rumah-rumah an', type: 'Mainan Outdoor', price: 4500000, spec: 'custom', weight: 'custom', images: ['img/rumahan1.jpeg', 'img/rumahan2.jpeg', 'img/a3.jpg'], video: 'img/video1.mp4' },
+                    { id: 12, name: '3 set (Ayunan, Perosotan, Jungkitan)', type: 'Mainan Outdoor', price: 4500000, spec: 'custom', weight: 'custom', images: ['img/3set.jpeg', 'img/a2.jpg', 'img/a3.jpg'], video: 'img/video1.mp4' },
+                    { id: 13, name: '4 set (Ayunan, Perosotan, Jungkitan, Ayunan Rantai)', type: 'Mainan Outdoor', price: 4700000, spec: 'custom', weight: 'custom', images: ['img/a1.jpg', 'img/a2.jpg', 'img/a3.jpg'], video: 'img/video1.mp4' },
+                    { id: 14, name: 'Jembatan Rantai', type: 'Mainan Outdoor', price: 3000000, spec: '250 cm x 50 cm x 160 cm', weight: '20 kg', images: ['img/a1.jpg', 'img/a2.jpg', 'img/a3.jpg'], video: 'img/video1.mp4' },
+                    { id: 15, name: 'Bola Dunia', type: 'Mainan Outdoor', price: 2000000, spec: 'Diameter 150 cm dan Tinggi 160 cm ', weight: '15 kg', images: ['img/boladunia1.jpeg', 'img/a2.jpg', 'img/a3.jpg'], video: 'img/video1.mp4' }
+                ],
+
+                openLightbox(product, index) {
+                    this.lightboxMedia = [...product.images, product.video];
+                    this.lightboxIndex = index;
+                    this.showLightbox = true;
+                },
+                prevLightbox() {
+                    this.lightboxIndex = (this.lightboxIndex - 1 + this.lightboxMedia.length) % this.lightboxMedia.length;
+                },
+                nextLightbox() {
+                    this.lightboxIndex = (this.lightboxIndex + 1) % this.lightboxMedia.length;
+                },
+                addToCart(product) {
+                    this.cart.push({...product});
+                    this.lastAddedItem = product.name;
+                    this.showToast = true;
+                    setTimeout(() => { this.showToast = false; }, 3000);
+                },
+                removeFromCart(index) {
+                    this.cart.splice(index, 1);
+                },
+                totalPrice() {
+                    return this.cart.reduce((total, item) => total + item.price, 0);
+                },
+                formatRupiah(num) {
+                    return 'Rp ' + num.toLocaleString('id-ID');
+                },
+                askReady(name) {
+                    const msg = encodeURIComponent(`Halo Admin Ayunan Ondo, apakah produk "${name}" ready? Apakah harganya bisa berubah?`);
+                    window.open(`https://wa.me/${this.waNumber}?text=${msg}`, '_blank');
+                },
+                checkoutWhatsApp() {
+                    if(!this.buyerName || !this.buyerLocation) {
+                        alert("Mohon lengkapi Nama dan Lokasi!");
+                        return;
+                    }
+                    let itemText = "";
+                    this.cart.forEach((item, i) => {
+                        itemText += `${i+1}. ${item.name} (${this.formatRupiah(item.price)})\n`;
+                    });
+                    const msg = encodeURIComponent(
+                        `*PESANAN BARU - AYUNAN ONDO TORANG JAYA*\n\n` +
+                        `Nama: ${this.buyerName}\n` +
+                        `Lokasi: ${this.buyerLocation}\n\n` +
+                        `Pesanan:\n${itemText}\n` +
+                        `*Total Harga:* ${this.formatRupiah(this.totalPrice())}\n\n` +
+                        `_Jika ingin melakukan transaksi maka wajib DP 30% dari total harga._\n` +
+                        `*Note : Harga yang tertera belum termasuk ongkir bila dikirim di luar area Bekasi*`
+                    );
+                    window.open(`https://wa.me/${this.waNumber}?text=${msg}`, '_blank');
+                }
+            }
+        }
+    </script>
+</body>
+</html>
